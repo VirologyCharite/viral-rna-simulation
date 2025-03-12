@@ -1,0 +1,22 @@
+[project]
+name = "mutation-simulation"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "terrycojones", email = "tcj25@cam.ac.uk" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+mutation-simulation = "mutation_simulation.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
