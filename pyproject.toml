@@ -1,16 +1,16 @@
 [project]
-name = "mutation-simulation"
+name = "viral-rna-simulation"
 version = "0.1.0"
-description = "Add your description here"
+description = "A simulation of replication of viral RNA"
 readme = "README.md"
 authors = [
-    { name = "terrycojones", email = "tcj25@cam.ac.uk" }
+    { name = "terrycojones", email = "terence.jones@charite.de" }
 ]
 requires-python = ">=3.13"
 dependencies = []
 
 [project.scripts]
-mutation-simulation = "mutation_simulation.cli:main"
+viral-rna-simulation = "viral_rna_simulation.cli:main"
 
 [build-system]
 requires = ["hatchling"]

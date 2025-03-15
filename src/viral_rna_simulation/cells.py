@@ -3,12 +3,13 @@ from itertools import repeat
 from typing import Iterator
 from collections import Counter
 
-from mutation_simulation.cell import Cell
-from mutation_simulation.genome import Genome
+from viral_rna_simulation.cell import Cell
+from viral_rna_simulation.genome import Genome
+from viral_rna_simulation.utils import mutations_str
 
 
-def replicate_rnas(cell: Cell, steps: int, mutation_rate: float) -> Cell:
-    cell.replicate_rnas(steps, mutation_rate)
+def replicate_rnas(cell: Cell, steps: int, mutation_rate: float, ratio: int) -> Cell:
+    cell.replicate_rnas(steps, mutation_rate=mutation_rate, ratio=ratio)
     return cell
 
 
@@ -24,6 +25,9 @@ class Cells:
     def __iter__(self) -> Iterator[Cell]:
         return iter(self.cells)
 
+    def __len__(self) -> int:
+        return len(self.cells)
+
     def __str__(self) -> str:
         result = [f"<Cells with {len(self.cells)} cells>"]
         for i, cell in enumerate(self.cells):
@@ -32,17 +36,23 @@ class Cells:
         return "\n".join(result)
 
     def replicate(
-        self, workers: int | None = None, steps: int = 100, mutation_rate: float = 0.0
+            self, workers: int | None = None, steps: int = 1, mutation_rate: float = 0.0, ratio: int = 1
     ) -> None:
         """
         Replicate (in parallel) each cell for a given number of steps.
+
+        At each step, each cell picks one RNA to replicate, so in each call
+        to replicated, the number of RNA molecules overall (i.e., summed over
+        all cells) goes up by the product of the number of workers and the
+        number of steps (2 x 3 = 6, in this call).
 
         @param workers: The number of concurrent worker processes to allow in the
             process pool.
         @param steps: The number of replication steps each cell should perform.
         @param mutation_rate: The per-base mutation probability.
+        @param ratio: The number of +RNA molecules to make from a -RNA.
         """
-        result = []
+        new_cells = []
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
             for cell in executor.map(
@@ -50,10 +60,11 @@ class Cells:
                 self.cells,
                 repeat(steps),
                 repeat(mutation_rate),
+                repeat(ratio),
             ):
-                result.append(cell)
+                new_cells.append(cell)
 
-        self.cells = result
+        self.cells = new_cells
 
     def mutation_counts(self) -> Counter:
         """
@@ -64,8 +75,7 @@ class Cells:
         for cell in self.cells:
             for rna in cell:
                 for site in rna.genome:
-                    if mutant := site.mutant():
-                        mutations[mutant] += 1
+                    mutations.update(site.mutations)
 
         return mutations
 
@@ -92,10 +102,28 @@ class Cells:
         result.append(f"Total RNA molecule replications: {replications}")
 
         if mutations := self.mutation_counts():
-            total = sum(mutations.values())
-            rate = total / (replications * len(self.infecting_genome))
+            total_mutations = sum(mutations.values())
             result.append("Actual mutations:")
-            result.append(f"  Total: {total}")
+            result.append(f"  Total: {total_mutations}")
+
+            positive_mutation_count = negative_mutation_count = 0
+            for cell in self:
+                for rna in cell:
+                    count = sum(rna.genome.mutations().values())
+                    if rna.positive:
+                        positive_mutation_count += count
+                    else:
+                        negative_mutation_count += count
+
+            assert total_mutations == positive_mutation_count + negative_mutation_count
+            result.append(
+                f"    Of which, {positive_mutation_count} in (+) RNA molecules"
+            )
+            result.append(
+                f"    Of which, {negative_mutation_count} in (-) RNA molecules"
+            )
+
+            rate = total_mutations / (replications * len(self.infecting_genome))
             result.append(f"  Rate: {rate:.6f}")
             result.append(
                 "  From/to: "
@@ -105,24 +133,23 @@ class Cells:
                 ),
             )
         else:
+            total_mutations = 0
             result.append("Mutations: None")
 
         apparent_mutations = Counter()
         for cell in self:
             for rna in cell:
-                apparent_mutations += rna.sequence(self.infecting_genome)
+                apparent_mutations += rna.sequencing_mutation_counts(
+                    self.infecting_genome
+                )
 
         if apparent_mutations:
-            result.append("Apparent mutations:")
             total = sum(apparent_mutations.values())
-            result.append(f"  Total: {total}")
-            result.append(
-                "  From/to: "
-                + ", ".join(
-                    f"{mutation}:{count}"
-                    for mutation, count in sorted(apparent_mutations.items())
-                ),
-            )
+            result.extend([
+                "Apparent mutations:",
+                f"  Total: {total}",
+                f"  From/to: {mutations_str(apparent_mutations)}",
+            ])
         else:
             result.append("Apparent mutations: None")
 

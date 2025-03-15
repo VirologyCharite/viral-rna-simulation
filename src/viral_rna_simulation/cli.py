@@ -1,6 +1,6 @@
 import argparse
 
-from mutation_simulation.simulate import run
+from viral_rna_simulation.simulate import run
 
 
 def parse_args() -> argparse.Namespace:
@@ -11,9 +11,17 @@ def parse_args() -> argparse.Namespace:
     group.add_argument("--genome")
     parser.add_argument("--steps", type=int, default=1000)
     parser.add_argument("--mutation-rate", type=float, default=0.001)
+    parser.add_argument("--ratio", type=int, default=1)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    run(args.cells, args.genome, args.genome_length, args.mutation_rate, args.steps)
+    run(
+        args.cells,
+        args.genome,
+        args.genome_length,
+        args.mutation_rate,
+        args.steps,
+        args.ratio,
+    )

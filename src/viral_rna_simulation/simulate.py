@@ -1,5 +1,5 @@
-from mutation_simulation.cells import Cells
-from mutation_simulation.genome import Genome
+from viral_rna_simulation.cells import Cells
+from viral_rna_simulation.genome import Genome
 
 
 def run(
@@ -8,6 +8,7 @@ def run(
     genome_length: int,
     mutation_rate: float,
     steps: int,
+    ratio: int,
 ) -> None:
     """
     Simulate a number of cells.
@@ -15,6 +16,6 @@ def run(
     infecting_genome = Genome(genome, genome_length)
     cells = Cells(n_cells, infecting_genome)
 
-    cells.replicate(steps=steps, mutation_rate=mutation_rate)
+    cells.replicate(steps=steps, mutation_rate=mutation_rate, ratio=ratio)
 
     print(cells.summary())
