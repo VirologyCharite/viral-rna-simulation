@@ -21,14 +21,15 @@ The simulation has _many_ assumptions. Among them:
 * In sample preparation for sequencing, all RNA molecules are first reverse
   transcribed to make a single-stranded DNA (ssDNA) and a polymerase then
   makes the complementary DNA strand, resulting in a double-stranded DNA
-  (dsDNA) that is sequenced.
-* Reads from the sequencing are aligned against the (+) RNA reference genome
-  of the virus.
+  (dsDNA)
+* Both strands of the dsDNA are sequenced.
+* Reads from the sequencing of both strands of the dsDNA are (individually)
+  aligned against the (+) RNA reference genome of the virus.
 
 Sub-genomic RNAs (sgRNA) are not part of the model. Including them would not
-have shed any light on the original question, since changes in sgRNA are not
-interpreted any differently from from changes in full-genome copies. Sample
-preparation and sequencing of both is identical.
+have shed any light on the original question (for which, see below), since
+changes in sgRNA are not interpreted any differently from from changes in
+full-genome copies. Sample preparation and sequencing of both is identical.
 
 ## How should we count "mutations"?
 
