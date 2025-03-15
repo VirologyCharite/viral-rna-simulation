@@ -4,22 +4,23 @@ Here is a very simplistic and idealized (Python) simulation of viral RNA
 replication in cells.
 
 As it stands, this is a simulation of a _positive-sense_ RNA viral entering a
-cell and replicating through negative (reverse complement) intermediate copies.
+cell and replicating through negative (reverse complement (RC)) intermediate
+copies.
 
 The aim here was to examine the extent to which, even in a highly idealized
 scenario, the actual transcription mutations (in negative strand RNA) in the
 replication process could be mistaken for other mutations.
 
-The simulation has _many_ assumptions:
+The simulation has _many_ assumptions. Among them:
 
 * RNA molecules do not degrade over time.
-* Mutations occur during polymerase transcription (as opposed to occurring
-  spontaneously in RNA molecules as a result of some other process, such as
-  APOBED editing).
+* Genetic changes only occur during polymerase transcription (as opposed to
+  occurring spontaneously in RNA molecules as a result of some other process,
+  e.g., SNPs or APOBEC editing).
 * All RNA molecules (positive and negative sense) in all cells are sequenced.
-* In sample preparation for sequencing, all RNA molecules are reverse
-  transcribed to make a first single-stranded DNA (ssDNA) and a polymerase
-  then makes the complementary DNA strand, resulting in a double-stranded DNA
+* In sample preparation for sequencing, all RNA molecules are first reverse
+  transcribed to make a single-stranded DNA (ssDNA) and a polymerase then
+  makes the complementary DNA strand, resulting in a double-stranded DNA
   (dsDNA) that is sequenced.
 * Reads from the sequencing are aligned against the (+) RNA reference genome
   of the virus.
@@ -44,7 +45,7 @@ nucleotide that should complement a `C` and it mistakenly incorporates an
 `A`. Although a `C` is involved, it is not changed and so it feels misleading
 label this as a `C` change (but see below).
 
-### 2. Logically attractive
+### 2. Logically attractive?
 
 It could instead be called a `G->A` change, because the base that should have
 been added was a `G`.
@@ -61,31 +62,46 @@ we might want to use the same term to describe what happened and call this a
 
 ### 3. Standard practice
 
-Under ideal conditions, if this (-) RNA with the `A` is sequenced, the sample
-preparation will result in a dsRNA molecule which will have an `A/T` pair.
+Under ideal conditions, if the (-) RNA with the erroneous `A` is sequenced,
+the sample preparation will result in a dsRNA molecule which will have an
+`A/T` pair.  The first ssDNA strand will be the RC of the (-) RNA (which is a
+RC of the (+) RNA genome) and hence it is a 5' to 3' match of the viral
+genome, but with a `T` (RC of the `A` in the (-) RNA).
+
+The second ssDNA synthesized will be a RC of the first ssDNA and have an `A`.
+Its RC will match the reference (it is the same as the (-) RNA, which is a RC
+of the viral genome).
+
 Both strands of the dsDNA will be sequenced and the resulting reads will be
-aligned to the (+) viral reference. The second ssDNA added will have an `A`
-and its reverse complement will match the reference (it is the same as the
-(-) RNA, which is a reverse complement of the viral genome), but with a
-mismatch at this site.
+aligned to the (+) RNA viral reference. 
 
 Alignment software (at least including
 [bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml) and
-[bwa](https://bio-bwa.sourceforge.net/)) will put the reverse complement of
-the sequencing read (which is a reverse complement of the viral genome) into
-their resultant [SAM](https://en.wikipedia.org/wiki/SAM_(file_format)) file,
-with the `0x10 REVERSE` bit set in the flag field. Then, software like
+[bwa](https://bio-bwa.sourceforge.net/)) will put the RC of the second dsDNA
+strands (which is a RC of the viral genome) into their resultant
+[SAM](https://en.wikipedia.org/wiki/SAM_(file_format)) file, with the
+`0x10 REVERSE` bit set in the flag field. I.e., the sequence in the SAM file
+for the second DNA strand will match the reference genome, just like the
+sequence for the first DNA strand does. I.e., both sequences in the SAM file
+will have a `T`.
+
+Then, software like
 [pysam](https://pysam.readthedocs.io/en/stable/) will indicate that the read
 had a `T` at this location (RNA viral reference genomes use `T` instead of
 the `U` that is actually in the RNA and sequencing is of a DNA copy of the
-viral RNA, so it makes some sense to talk of `T` instead of `U`).
+viral RNA, so it makes some sense to here talk of `T` instead of `U`).
 
 In this case, although the polymerase should have incorporated a `G` but
-instead incorporated an `A`, this change would be classified as a `C->U`. It
-is clearly not accurate to think of `C->U` as being the _actual_ physical
-mutation. Instead, the result of the change is, supposing the (-) RNA is
-subsequently transcribed, that the cell will then contain a (+) RNA with a
-`U` at the genome site that in the original (+) RNA there is a `C`.
+instead incorporated an `A`, this change would be classified as a
+`C->U`. However, it is clearly not accurate to think of `C->U` as being the
+_actual_ physical mutation. Instead, the result of the change is, supposing
+the (-) RNA is subsequently transcribed, that the cell will then contain a
+(+) RNA with a `U` at the genome site that in the original (+) RNA there is a
+`C`.
+
+People will informally say there has been a `C->U` mutation, but this is not
+the case. (It is only the case if a `C` on a (+) RNA is directly mutated to
+become a `U`.)
 
 ## This is unfortunately all a bit ambiguous
 
@@ -137,7 +153,7 @@ highlight that even in the simplest possible setup it is possible to draw
 entirely wrong conclusions.
 
 For example, suppose, as above, that the infecting virus has a `C` and the
-polymerase puts an `A` into the (-) RNA reverse complement. That is a single
+polymerase puts an `A` into the (-) RNA RC. That is a single
 error. Now suppose that (-) RNA is transcribed 100 times (a ratio of positive
 to negatve RNA of 10-100:1 is known for coronaviruses) with no errors. Then
 we have one original (+) RNA molecule, one (-) RNA with an `A`, and 100 (+)
@@ -146,8 +162,7 @@ original molecule results in a dsDNA with a `C/G` pair. The (-) RNA results
 in a dsDNA with an `A/T` pair, and the 100 (+) RNAs also each result in a
 dsDNA with an `A/T` pair. That's 102 dsDNA molecules. In the sequencing these
 get denatured into 204 ssDNA molecules and sequenced. The original (+) RNA
-yields reads for two ssDNA that both match the reference (one in reverse
-complement). Then we have 200 ssDNA which are all aligned to the
+yields reads for two ssDNA that both match the reference (one in RC). Then we have 200 ssDNA which are all aligned to the
 reference. Half have a `T` and half have an `A`, and these are all classified
 and counted as `C->T` changes.
 
@@ -224,7 +239,7 @@ options:
                      this ratio is often in the range of 10 to 100. (default: 1)
 ```
 
-<--
+<!--
 ## References
 
 [1] [C→U transition biases in SARS-CoV-2: still rampant 4 years fromthe start of the COVID-19 pandemic](https://pubmed.ncbi.nlm.nih.gov/39475243/), [Peter Simmonds](https://www.ndm.ox.ac.uk/team/peter-simmonds) mBio. 2024 Dec 11;15(12):e0249324. doi: 10.1128/mbio.02493-24. Epub 2024 Oct 30.
