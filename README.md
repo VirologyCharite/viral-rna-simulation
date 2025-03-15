@@ -239,6 +239,45 @@ options:
                      this ratio is often in the range of 10 to 100. (default: 1)
 ```
 
+## Running the tests
+
+If you clone this repo, you can run
+
+```sh
+$ pytest
+```
+
+## Python code classes
+
+The code in `src/viral_rna_simulation` has files defining the following classes.
+
+### Cells
+
+A class to hold a collection of individual cells. A simulation has a fixed
+number of infected cells. The replication of RNA within each cell takes place
+in its own process.
+
+### Cell
+
+Holds a collection of RNA molecules. A replication step involves randomly
+selecting one of the cell's RNAs and replicating it in RC, perhaps with
+transcription errors, and adding it (with +/- flipped) to the population of
+RNAs in the cell.
+
+### RNA
+
+A single RNA molecule, with a +/- orientation and a genome.
+
+### Genome
+
+A genome consists of a list of sites.
+
+### Site
+
+A site has a nucleotide base and stores whether it has been mutated.
+
+
+
 <!--
 ## References
 
