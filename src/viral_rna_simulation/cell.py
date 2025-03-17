@@ -45,7 +45,7 @@ class Cell:
         """
         for _ in range(steps):
             rna = chooser(self.rnas)
-            if rna.genome.positive:
+            if rna.positive:
                 # Our chosen molecule is positive, so we're about to make a
                 # (-) RNA. If we are only mutating positive strands, we must
                 # set the mutation rate to zero.

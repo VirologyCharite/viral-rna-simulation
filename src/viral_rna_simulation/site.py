@@ -8,7 +8,6 @@ class Site:
     Manage a genome site.
 
     @param base: The nucleotide.
-    @param offset: The 0-based offset of this site within its genome.
     @param mutant: True if the site was created by a mutation (in which case
         the detail of the mutation is in mutation_history[-1]).
     @param mutation_history: A list of 2-tuples that have a nucleotide from/to change
@@ -18,12 +17,10 @@ class Site:
     def __init__(
         self,
         base: str,
-        offset: int,
         mutant: bool = False,
         mutation_history: list[tuple[str, bool]] | None = None,
     ) -> None:
         self.base = base
-        self.offset = offset
         self.mutant = mutant
         self.mutation_history = mutation_history or []
 
@@ -39,12 +36,10 @@ class Site:
             if self.mutation_history
             else ""
         )
-        return f"<Site offset={self.offset}, mutant={self.mutant}, base={self.base!r}{mutations}>"
+        return f"<Site mutant={self.mutant}, base={self.base!r}{mutations}>"
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Site):
-            # We should never be comparing sites at different offsets.
-            assert self.offset == other.offset
             return self.base == other.base
         return NotImplemented
 
@@ -68,17 +63,10 @@ class Site:
             new_base = rc_base
             mutation_history = self.mutation_history[:]
 
-        return Site(
-            new_base, self.offset, mutant=mutant, mutation_history=mutation_history
-        )
+        return Site(new_base, mutant=mutant, mutation_history=mutation_history)
 
     def rc(self) -> "Site":
         """
         Return a reverse-complemented site.
         """
-        return Site(
-            rc1(self.base),
-            offset=self.offset,
-            mutant=False,
-            mutation_history=self.mutation_history[:],
-        )
+        return Site(rc1(self.base), mutant=False, mutation_history=self.mutation_history[:])

@@ -104,7 +104,7 @@ class Cells:
 
         for cell in self.cells:
             for rna in cell:
-                if rna.genome.positive:
+                if rna.positive:
                     positive += 1
                 else:
                     negative += 1
@@ -119,7 +119,7 @@ class Cells:
 
         for cell in self.cells:
             for rna in cell:
-                if rna.genome.positive:
+                if rna.positive:
                     positive += rna.replications
                 else:
                     negative += rna.replications
@@ -136,7 +136,7 @@ class Cells:
 
         for cell in self:
             for rna in cell:
-                mutations = from_positive if rna.genome.positive else from_negative
+                mutations = from_positive if rna.positive else from_negative
                 counts, reasons = rna.sequencing_mutation_counts(self.infecting_genome)
                 mutations += counts
 

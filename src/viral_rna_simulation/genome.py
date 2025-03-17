@@ -14,13 +14,13 @@ class Genome:
         positive: bool = True,
     ) -> None:
         if sites:
-            self.sites = (
-                sites
-                if isinstance(sites, list)
-                else [Site(base, offset) for offset, base in enumerate(sites)]
-            )
+            if isinstance(sites, list):
+                self.sites = sites
+            else:
+                assert isinstance(sites, str)
+                self.sites = [Site(base) for base in sites]
         elif length:
-            self.sites = [Site(choice("ACGT"), offset) for offset in range(length)]
+            self.sites = [Site(choice("ACGT")) for _ in range(length)]
         else:
             raise ValueError(
                 "You must provide either the genome sites or a non-zero genome length."
@@ -38,10 +38,15 @@ class Genome:
 
     def __eq__(self, other: object, /) -> bool:
         if isinstance(other, Genome):
-            return all(a == b for (a, b) in zip(self.sites, other.sites))
+            return self.positive == other.positive and all(
+                a == b for (a, b) in zip(self.sites, other.sites)
+            )
         return NotImplemented
 
     def __str__(self) -> str:
+        return "".join(site.base for site in self)
+
+    def __repr__(self) -> str:
         positive = "+" if self.positive else "-"
         return "\n".join(
             [f"<({positive}) Genome length {len(self)}>"]
@@ -53,10 +58,9 @@ class Genome:
         Copy the new genome (reverse complemented), possibly with mutations.
         """
         positive = not self.positive
-        return Genome(
-            [site.replicate(positive, mutation_rate) for site in reversed(self)],
-            positive=positive,
-        )
+        sites = [site.replicate(positive, mutation_rate) for site in reversed(self)]
+
+        return Genome(sites, positive=positive)
 
     def rc(self) -> "Genome":
         """

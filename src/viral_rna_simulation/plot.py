@@ -10,6 +10,8 @@ def make_plot(cells: Cells, filename: str):
     overall_changes = positive_changes + negative_changes
 
     if overall_changes:
+        # title = cells.summary().replace("\n", "<br>")
+
         from_positive, from_negative = cells.apparent_mutation_counts()
         apparent_changes = from_positive + from_negative
         assert apparent_changes
@@ -49,9 +51,13 @@ def make_plot(cells: Cells, filename: str):
             barmode="group",
             category_orders={"Change": BARCHART_CATEGORIES},
             height=300,
+            # title=title,
         )
 
-        fig.write_html(filename)
+        if filename.endswith(".html"):
+            fig.write_html(filename)
+        else:
+            fig.write_image(filename)
 
         print(f"Wrote plot to {filename!r}.", file=sys.stderr)
     else:
