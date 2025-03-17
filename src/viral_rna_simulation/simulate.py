@@ -6,16 +6,19 @@ def run(
     n_cells: int,
     genome: str | None,
     genome_length: int,
+    mutate_in: str,
     mutation_rate: float,
     steps: int,
     ratio: int,
-) -> None:
+) -> Cells:
     """
     Simulate a number of cells.
     """
     infecting_genome = Genome(genome, genome_length)
     cells = Cells(n_cells, infecting_genome)
 
-    cells.replicate(steps=steps, mutation_rate=mutation_rate, ratio=ratio)
+    cells.replicate(
+        steps=steps, mutate_in=mutate_in, mutation_rate=mutation_rate, ratio=ratio
+    )
 
-    print(cells.summary())
+    return cells

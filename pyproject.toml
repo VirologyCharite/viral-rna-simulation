@@ -7,7 +7,10 @@ authors = [
     { name = "terrycojones", email = "terence.jones@charite.de" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "plotly[express]>=6.0.0",
+    "polars>=1.25.2",
+]
 
 [project.scripts]
 viral-rna-simulation = "viral_rna_simulation.cli:main"

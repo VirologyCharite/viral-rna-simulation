@@ -7,17 +7,25 @@ from viral_rna_simulation.utils import mutations_str
 
 
 class Genome:
-    def __init__(self, sites: list[Site] | str | None = None, length: int = 0) -> None:
+    def __init__(
+        self,
+        sites: list[Site] | str | None = None,
+        length: int = 0,
+        positive: bool = True,
+    ) -> None:
         if sites:
             self.sites = (
-                sites if isinstance(sites, list) else [Site(base) for base in sites]
+                sites
+                if isinstance(sites, list)
+                else [Site(base, offset) for offset, base in enumerate(sites)]
             )
         elif length:
-            self.sites = [Site(choice("ACGT")) for _ in range(length)]
+            self.sites = [Site(choice("ACGT"), offset) for offset in range(length)]
         else:
             raise ValueError(
                 "You must provide either the genome sites or a non-zero genome length."
             )
+        self.positive = positive
 
     def __iter__(self) -> Iterator[Site]:
         return iter(self.sites)
@@ -34,32 +42,39 @@ class Genome:
         return NotImplemented
 
     def __str__(self) -> str:
-        result = [f"<Genome length {len(self.sites)}>"]
-
-        for site in self.sites:
-            result.append(f"  {site}")
-
-        return "\n".join(result)
+        positive = "+" if self.positive else "-"
+        return "\n".join(
+            [f"<({positive}) Genome length {len(self)}>"]
+            + [f"  {site}" for site in self]
+        )
 
     def replicate(self, mutation_rate: float = 0.0) -> "Genome":
         """
         Copy the new genome (reverse complemented), possibly with mutations.
         """
-        return Genome([site.replicate(mutation_rate) for site in reversed(self.sites)])
+        positive = not self.positive
+        return Genome(
+            [site.replicate(positive, mutation_rate) for site in reversed(self)],
+            positive=positive,
+        )
 
     def rc(self) -> "Genome":
         """
-        Get a reverse-complemented genome.
+        Get a reverse-complemented copy of this genome.
         """
-        return Genome([site.rc() for site in reversed(self.sites)])
+        return Genome(
+            [site.rc() for site in reversed(self)], positive=not self.positive
+        )
 
     def mutations(self) -> Counter:
         """
         Get the mutations that have occurred in this genome.
         """
         mutations = Counter()
-        for site in self.sites:
-            mutations += site.mutations
+        for site in self:
+            if site.mutant:
+                change, _ = site.mutation_history[-1]
+                mutations[change] += 1
 
         return mutations
 
@@ -89,13 +104,15 @@ def genomes_str(
         mutations_title = f"Mutations ({sum(mutations.values())}): "
 
     if mutations:
-        width = max(len(title_1), len(title_2), len(differences_title), len(mutations_title))
+        width = max(
+            len(title_1), len(title_2), len(differences_title), len(mutations_title)
+        )
 
         return "\n".join([
             f"{title_1:{width}}" + s_1,
             f"{differences_title:{width}}" + "".join(difference),
             f"{title_2:{width}}" + s_2,
-            f"{mutations_title:{width}}{mutations_str(mutations)}"
+            f"{mutations_title:{width}}{mutations_str(mutations)}",
         ])
     else:
         width = max(len(title_1), len(title_2))

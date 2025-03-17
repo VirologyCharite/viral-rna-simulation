@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from viral_rna_simulation.genome import Genome
 
@@ -6,22 +6,17 @@ from viral_rna_simulation.genome import Genome
 
 
 class RNA:
-    def __init__(
-        self,
-        genome: Genome,
-        positive: bool,
-    ) -> None:
+    def __init__(self, genome: Genome) -> None:
         self.genome = genome
-        self.positive = positive
         self.replications = 0
 
     def __str__(self):
-        polarity = "+" if self.positive else "-"
-        return f"<{polarity}RNA {self.genome}>"
+        positive = "+" if self.genome.positive else "-"
+        return f"<({positive}) RNA {self.genome}>"
 
     def __eq__(self, other: object, /) -> bool:
         if isinstance(other, RNA):
-            return self.genome == other.genome and self.positive == other.positive
+            return self.genome == other.genome
         return NotImplemented
 
     def __len__(self) -> int:
@@ -32,19 +27,20 @@ class RNA:
         Make a reverse-complement copy of this RNA, perhaps with mutations.
         """
         self.replications += 1
-        return RNA(
-            self.genome.replicate(mutation_rate),
-            not self.positive,
-        )
+        return RNA(self.genome.replicate(mutation_rate))
 
-    def sequencing_mutation_counts(self, infecting_genome: Genome) -> dict[str, int]:
+    def sequencing_mutation_counts(
+        self, infecting_genome: Genome
+    ) -> tuple[dict[str, int], dict[str, dict[bool, Counter[str]]]]:
         """
         Return the mutation counts (relative to the infecting genome) that would be
         counted if this molecule were sequenced. The library preparation involves making
         two (complementary) DNA strands, both of which are assumed to be sequenced.
         """
-        genome = self.genome if self.positive else self.genome.rc()
+        genome = self.genome if self.genome.positive else self.genome.rc()
         mutations = defaultdict(int)
+
+        sources: dict[str, dict[bool, Counter[str]]] = {}
 
         # print(
         #     genomes_str(
@@ -58,7 +54,20 @@ class RNA:
 
         for a, b in zip(infecting_genome, genome):
             if a != b:
-                # TODO: We should perhaps add two here.
-                mutations[a.base + b.base] += 1
+                change = a.base + b.base
+                # If the genome base does not match the infecting genome, the genome
+                # site must have a mutation history.
+                historical_change, historical_positive = b.mutation_history[-1]
+                reasons = sources.setdefault(
+                    change,
+                    {
+                        True: Counter(),
+                        False: Counter(),
+                    },
+                )
+                reasons[historical_positive][historical_change] += 1
 
-        return mutations
+                # TODO: We should perhaps add two here.
+                mutations[change] += 1
+
+        return mutations, sources

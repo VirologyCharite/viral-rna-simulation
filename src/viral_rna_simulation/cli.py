@@ -1,5 +1,6 @@
 import argparse
 
+from viral_rna_simulation.plot import make_plot
 from viral_rna_simulation.simulate import run
 
 
@@ -59,13 +60,23 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--mutate-in",
+        default="both",
+        choices=("both", "negative", "positive"),
+        help=(
+            "The type of RNA molecules to allow mutations in. If 'negative' or "
+            "'positive', mutations will only be allowed in those molecules."
+        ),
+    )
+
+    parser.add_argument(
         "--mutation-rate",
         type=float,
         default=0.001,
         metavar="N",
         help=(
-            "The per-nucleotide mutation (polymerase misincorporation) rate, applied "
-            "during RNA molecule replication."
+            "The per-nucleotide mutation (i.e., polymerase misincorporation) rate, "
+            "applied during RNA molecule replication."
         ),
     )
 
@@ -80,16 +91,27 @@ def parse_args() -> argparse.Namespace:
         ),
     )
 
+    parser.add_argument(
+        "--plot-filename",
+        help="The file to write a plot of actual and apparent changes to.",
+    )
+
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    run(
+    cells = run(
         args.cells,
         args.genome,
         args.genome_length,
+        args.mutate_in,
         args.mutation_rate,
         args.steps,
         args.ratio,
     )
+
+    print(cells.summary())
+
+    if args.plot_filename:
+        make_plot(cells, args.plot_filename)
