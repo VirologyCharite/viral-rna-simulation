@@ -26,4 +26,5 @@ dev = [
 ]
 
 [tool.uv]
+# The kaleido constraint is added due to https://github.com/astral-sh/uv/issues/12032
 constraint-dependencies = ["kaleido==0.2.1"]

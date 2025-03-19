@@ -88,8 +88,6 @@ class Test_sequencing_mutation_counts:
     @pytest.mark.parametrize("from_,to", single_changes)
     def test_two_changes_negative(self, from_, to) -> None:
         rna = RNA(Genome(to + to, positive=False))
-        print(repr(rna))
-        print(repr(Genome(from_ + from_)))
         mutations, _ = rna.sequencing_mutation_counts(Genome(from_ + from_))
         expected = {} if from_ == rc1(to) else {from_ + rc1(to): 2}
         assert mutations == expected
@@ -101,8 +99,6 @@ class Test_sequencing_mutation_counts:
 
     def test_longer_negative(self) -> None:
         rna = RNA(Genome("AA", positive=False))
-        print(Genome("AA", positive=False))
-        print(Genome("CC"))
         mutations, _ = rna.sequencing_mutation_counts(Genome("CC"))
         assert mutations == {"CT": 2}
 
